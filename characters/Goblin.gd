@@ -40,8 +40,6 @@ func _process(delta):
 		
 		FETCH:
 			print("perseguindo!!")
-			var resultado = generate_successor(self)
-			print(resultado)
 			$AnimatedSprite.play("run")
 			fetch(delta) # vai ter o A* depois, por enquanto só pega a posição global e segue
 			
@@ -132,33 +130,10 @@ func is_node_in_list(node, list):
 		if n.position == node.position:
 			return true
 	return false
-
-func generate_successor(current_node):
-	var neighbors = []
-	var tilemap = get_node("Obstacles")
-	if(tilemap != null):
-		var tilemap_size = tilemap.get_used_rect().size
-		var direcoes = [Vector2(0, -1), Vector2(0, 1), Vector2(-1, 0), Vector2(1, 0)]
-		for dir in direcoes:
-			var posicao_vizinho = current_node.position + dir * tilemap.cell_size
-			if(posicao_vizinho.x < 0 or posicao_vizinho.y < 0 or
-			 posicao_vizinho >= tilemap_size.x or posicao_vizinho >= tilemap_size.y):
-				continue
-			if(tilemap.get_cellv(posicao_vizinho) == -1):
-				continue
-			var vizinho = KinematicBody2D.new()
-			vizinho.position = posicao_vizinho
-			if (not(is_node_in_list(vizinho, closed_list))):
-				neighbors.append(vizinho)
 	
-	return neighbors
-
-func a_star(objetivo):
-	open_list.append(self)
-	while(not(open_list.empty())):
-		var atual = open_list[0]
-		for i in range(1, open_list.size()):
-			if(open_list[i].f_cost < atual.f_cost):
-				atual = open_list[i]
-			open_list.erase(atual)
-			closed_list.append(atual)
+	
+func gerar_vizinhos(no_atual):
+	pass
+	
+func a_estrela(objetivo):
+	pass
