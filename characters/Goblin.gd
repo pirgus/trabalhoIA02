@@ -26,7 +26,7 @@ var direction = Vector2.ZERO
 onready var player_position = player.global_position
 onready var self_position = global_position
 onready var distance = player_position.distance_to(self_position)
-
+onready var tilemap = get_node("Obstacles")
 
 
 func _process(delta):
@@ -40,6 +40,8 @@ func _process(delta):
 		
 		FETCH:
 			print("perseguindo!!")
+			var vizinhos = gerar_vizinhos(self)
+			print(vizinhos)
 			$AnimatedSprite.play("run")
 			fetch(delta) # vai ter o A* depois, por enquanto só pega a posição global e segue
 			
@@ -133,7 +135,27 @@ func is_node_in_list(node, list):
 	
 	
 func gerar_vizinhos(no_atual):
-	pass
+	var current_position = no_atual.position
+	var step_size = 16
+	var neighbors = []
 	
+	for x in range(-1, 2):
+		for y in range(-1, 2):
+			
+			# Ignora o próprio tile atual
+			if Vector2(x, y) == Vector2.ZERO:
+				continue
+			# Calcula a posição do vizinho
+			var neighbor_position = current_position + Vector2(x, y) * step_size
+			
+			# Verifica se a posição do vizinho é uma posição válida para o KinematicBody2D se mover
+			var collision = detect_collision()
+			if collision != "Obstacles":
+				# Adiciona o vizinho à lista
+				neighbors.append(neighbor_position)
+
+	# Retorna a lista de vizinhos
+	return neighbors
+
 func a_estrela(objetivo):
 	pass
