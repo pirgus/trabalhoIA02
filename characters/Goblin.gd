@@ -14,6 +14,7 @@ enum {
 	MOVE_AWAY
 }
 
+const TILE_SIZE = 16
 var can_attack
 var can_heal
 var is_colliding = false
@@ -26,8 +27,7 @@ var direction = Vector2.ZERO
 onready var player_position = player.global_position
 onready var self_position = global_position
 onready var distance = player_position.distance_to(self_position)
-onready var tilemap = get_node("Obstacles")
-
+onready var orc_scene = get_node("res://characters/Goblin.tscn")
 
 func _process(delta):
 	if(hp == 0):
@@ -132,30 +132,23 @@ func is_node_in_list(node, list):
 		if n.position == node.position:
 			return true
 	return false
-	
-	
-func gerar_vizinhos(no_atual):
-	var current_position = no_atual.position
-	var step_size = 16
+
+func gerar_vizinhos(node):
 	var neighbors = []
 	
-	for x in range(-1, 2):
-		for y in range(-1, 2):
-			
-			# Ignora o próprio tile atual
-			if Vector2(x, y) == Vector2.ZERO:
-				continue
-			# Calcula a posição do vizinho
-			var neighbor_position = current_position + Vector2(x, y) * step_size
-			
-			# Verifica se a posição do vizinho é uma posição válida para o KinematicBody2D se mover
-			var collision = detect_collision()
-			if collision != "Obstacles":
-				# Adiciona o vizinho à lista
-				neighbors.append(neighbor_position)
-
-	# Retorna a lista de vizinhos
-	return neighbors
+	var tilemap = Globals.obstacles
+	var cell = tilemap.get_cell(0, 0)
+	var tileset = tilemap.get_tileset()
+	var size = tilemap.cell_size
+	var posicao_atual = self.position
+	var celulas_usadas = tilemap.get_used_cells()
+	
+	var local_position = tilemap.to_local(global_position)
+	var tile_position = tilemap.world_to_map(local_position)
+	print("tile_position = ", tile_position)
+	#var tile_id = tilemap.get_cellv(tile_position)
+	
+	
 
 func a_estrela(objetivo):
 	pass
