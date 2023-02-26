@@ -109,7 +109,10 @@ func fetch(delta):
 	
 	#var velocity = direction * SPEED
 	#velocity = move_and_slide(velocity)		
-	var caminho = a_estrela(posicao_atual_enemy, posicao_atual_player)	
+	print("posicao atual do ORC no grid = ", posicao_atual_enemy)
+	print("posicao atual do PLAYER no grid = ", posicao_atual_player)
+	var caminho = a_estrela(posicao_atual_enemy, posicao_atual_player)
+	#print("caminho gerado = ", caminho)	
 	$AnimatedSprite.flip_h = direction.x < 0
 	
 	var collision = detect_collision()
@@ -229,6 +232,89 @@ func gerar_vizinhos2(node_a_star):
 #	var action : Vector2
 #	var path_cost : int
 
+func a_estrela_2(inicio, objetivo): 
+	print("entrou no a_estrela_2")
+	# parâmetros inicio e objetivo são dois Vector2
+	# com valores equivalentes às coordenadas do grid do tilemap obstacles (16, 16)
+	
+	# listas OPEN e CLOSED para determinar caminhos já explorados (ou não)
+	var open = []
+	var closed = []
+	
+	# lista para armazenar os passos necessários para alcançar o objetivo
+	var caminho = []
+	
+	# lista para armazenar geração de vizinhos
+	var vizinhos = []
+	
+	# coloca o inicio na lista OPEN
+		# mas pra isso, precisamos construir a estrutura Node_A_Star com base no inicio
+	var inicio_node = Node_A_Star.new()
+	inicio_node.state = inicio
+	inicio_node.parent = null
+	inicio_node.action = Vector2.ZERO
+	# o nó inicial possui como custo apenas o valor da heuristica
+	inicio_node.path_cost = heuristic(inicio, objetivo) 
+	
+	open.append(inicio_node)
+	
+	# executar enquanto ainda houverem nós não explorados, ou seja
+	# até que a lsita open não esteja vazia
+	while (not(open.empty())):
+		print("lista OPEN = ", open)
+		
+		# obter o nó com menos custo de caminho na lista open
+		#var no_atual = Node_A_Star.new()
+#		no_atual.path_cost = 0
+		
+		var no_atual = open[0]
+		var no_atual_index = 0
+		
+		for i in open:
+			if i.path_cost < no_atual.path_cost:
+				no_atual.state = i.state
+				no_atual.parent = i.parent
+				no_atual.action = i.action
+				no_atual.path_cost = i.path_cost
+				no_atual_index = open.find(i)
+		
+		# remove o nó da lista OPEN e passa pra CLOSED
+		open.remove(no_atual_index)
+		closed.append(no_atual)
+		
+		#---------------------------------------
+#		for i in open:
+#			if i.path_cost < no_atual.path_cost:
+#				no_atual.state = i.state
+#				no_atual.parent = i.parent
+#				no_atual.action = i.action
+#				no_atual.path_cost = i.path_cost
+		#---------------------------------------
+		
+		
+		# se o no_atual é = objetivo, retorna os passos necessários para alcança-lo
+		if no_atual.state == objetivo:
+			var current = no_atual
+			while current != null:
+				caminho.append(current.state)
+				current = current.parent
+			# reverte a lista para obter o caminho certo
+			return caminho.invert() 
+		
+		# senão, gera os possíveis vizinhos
+		vizinhos = gerar_vizinhos2(no_atual)
+		for vizinho in vizinhos:
+			if closed.has(vizinho):
+				continue
+			
+			vizinho.path_cost = no_atual.path_cost + heuristic(vizinho.state, objetivo) + 1
+			
+			for open_node in open:
+				if vizinho.state == open_node.state and vizinho.path_cost > open_node.path_cost:
+					continue
+			
+			open.append(vizinho)
+
 # função que realiza o algoritmo a*
 func a_estrela(inicio, objetivo):
 	print("iniciou o a_estrela")
@@ -249,6 +335,7 @@ func a_estrela(inicio, objetivo):
 	print("heuristica inicial = ", posicao_inicial.path_cost)
 	
 	open_list.append(posicao_inicial)
+	open_list.erase(posicao_inicial)
 	
 	while not(open_list.empty()):
 		minimo = Node_A_Star.new()
@@ -264,6 +351,10 @@ func a_estrela(inicio, objetivo):
 		
 		# se for o objetivo, termina
 		if(minimo.state == objetivo):
+			var current_node = minimo
+			while(current_node != null):
+				path.append(current_node.state)
+				current_node = current_node.parent
 			return path
 		
 		# senão, gera os nós filhos desse
@@ -280,7 +371,7 @@ func a_estrela(inicio, objetivo):
 				# e o seu custo de caminho é menor do que o custo calculado anteriormente
 				if vizinho.path_cost <= successor_current_cost:
 					# -------------- nao sei se tá certo assim
-					path.append(vizinho.state)
+					#path.append(vizinho.state)
 					break
 					# ----------------------------------------
 					# precisa ir pro final do for mas como aaaa
@@ -289,7 +380,7 @@ func a_estrela(inicio, objetivo):
 			elif closed_list.has(vizinho):
 				if vizinho.path_cost <= successor_current_cost:
 					# -------------- nao sei se tá certo assim
-					path.append(vizinho.state)
+					#path.append(vizinho.state)
 					break
 					# ----------------------------------------
 					# pula pro final do for
