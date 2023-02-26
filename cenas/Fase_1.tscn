@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://characters/Goblin.tscn" type="PackedScene" id=1]
 [ext_resource path="res://characters/Player.tscn" type="PackedScene" id=2]
@@ -351,6 +351,9 @@ points = PoolVector2Array( 0, 0, 16, 0, 16, 16, 0, 16 )
 [sub_resource type="ConvexPolygonShape2D" id=5]
 points = PoolVector2Array( 0, 0, 16, 0, 16, 16, 0, 16 )
 
+[sub_resource type="ConvexPolygonShape2D" id=8]
+points = PoolVector2Array( 0, 0, 16, 0, 16, 16, 0, 16 )
+
 [sub_resource type="TileSet" id=2]
 0/name = "GRASS+.png 0"
 0/texture = ExtResource( 3 )
@@ -488,9 +491,16 @@ points = PoolVector2Array( 0, 0, 16, 0, 16, 16, 0, 16 )
 8/navigation_offset = Vector2( 0, 0 )
 8/shape_offset = Vector2( 0, 0 )
 8/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+8/shape = SubResource( 8 )
 8/shape_one_way = false
-8/shape_one_way_margin = 0.0
-8/shapes = [  ]
+8/shape_one_way_margin = 1.0
+8/shapes = [ {
+"autotile_coord": Vector2( 0, 0 ),
+"one_way": false,
+"one_way_margin": 1.0,
+"shape": SubResource( 8 ),
+"shape_transform": Transform2D( 1, 0, 0, 1, 0, 0 )
+} ]
 8/z_index = 0
 9/name = "GRASS+.png 9"
 9/texture = ExtResource( 3 )
@@ -609,7 +619,7 @@ cell_size = Vector2( 16, 16 )
 collision_use_kinematic = true
 collision_bounce = 0.96
 format = 1
-tile_data = PoolIntArray( 196618, 7, 0, 262149, 3, 0, 393218, 7, 0, 393219, 7, 0, 393220, 7, 0, 393221, 7, 0, 393222, 7, 0, 393223, 7, 0, 393224, 7, 0, 393225, 7, 0, 393226, 7, 0, 393227, 7, 0, 393228, 7, 0, 393229, 7, 0, 393230, 7, 0, 393231, 7, 0, 393232, 7, 0, 393233, 7, 0, 393234, 7, 0, 393235, 7, 0 )
+tile_data = PoolIntArray( 65544, 8, 0, 65552, 8, 0, 65555, 7, 0, 196618, 7, 0, 262149, 3, 0, 262160, 8, 0, 327687, 7, 0, 327692, 7, 0, 393218, 7, 0, 393219, 7, 0, 393220, 7, 0, 393221, 7, 0, 393222, 7, 0, 393223, 7, 0, 393224, 7, 0, 393225, 7, 0, 393226, 7, 0, 393227, 7, 0, 393228, 7, 0, 393229, 7, 0, 393230, 7, 0, 393231, 7, 0, 393232, 7, 0, 393233, 7, 0, 393234, 7, 0, 393235, 7, 0, 458767, 7, 0, 524297, 8, 0, 524306, 7, 0, 589837, 8, 0, 720896, 8, 0, 720904, 8, 0, 786435, 8, 0, 786443, 8, 0, 786448, 8, 0, 851974, 7, 0 )
 script = ExtResource( 4 )
 
 [connection signal="body_entered" from="Orc/Area2D" to="Orc" method="_on_Area2D_body_entered"]

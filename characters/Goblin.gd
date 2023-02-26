@@ -13,14 +13,17 @@ class Node_A_Star:
 	var state : Vector2
 	var parent : Node_A_Star
 	var action : Vector2
-	var path_cost : int
+	var g : int
+	var h : int
+	var f : int
 	
 
+var execute = true
 const TILE_SIZE = 16
 var can_attack
 var can_heal
 var is_colliding = false
-const SPEED = 50
+const SPEED = 20
 var hp = 40
 const HP_TOTAL = 40
 var state = IDLE
@@ -30,6 +33,7 @@ onready var player_position = player.global_position
 onready var self_position = global_position
 onready var distance = player_position.distance_to(self_position)
 onready var orc_scene = get_node("res://characters/Goblin.tscn")
+var caminho = []
 
 func _process(delta):
 	if(hp == 0):
@@ -44,7 +48,8 @@ func _process(delta):
 			print("perseguindo!!")
 			$AnimatedSprite.play("run")
 			
-			fetch(delta) 
+			var pos_player = player.global_position
+			fetch(pos_player)
 			
 		ATTACK:
 			print("atacando!!")
@@ -77,43 +82,73 @@ func _process(delta):
 		
 		
 func fetch(delta):
-	var posicao_player
-	if(player != null):
-		posicao_player = player.global_position
-		direction = global_position.direction_to(player.global_position)
+#	var posicao_player 
+#	if(player != null):
+#		posicao_player = player.global_position
+#		direction = global_position.direction_to(player.global_position)
 	
 	var tilemap = Globals.obstacles
 	var posicao_enemy = global_position
+	
+	#print("----------------posicao atual do orc no mundo = ", posicao_enemy)
 	var local_position_enemy = tilemap.to_local(posicao_enemy)
 	var posicao_atual_enemy = tilemap.world_to_map(local_position_enemy)
-	
-	
-	#print("posicao do player no mundo = ", player.global_position)
+	#print("----------------posicao atual do orc no grid = ", posicao_atual_enemy)
 	
 	# converte para posição no grid do tilemap
-	var local_position_player = tilemap.to_local(posicao_player)
+	var local_position_player = tilemap.to_local(delta)
 	var posicao_atual_player = tilemap.world_to_map(local_position_player)
-	#print("posicao do player no grid = ", posicao_atual_player)
 	# --------------------------------------------------------------------------
 	
 	# recupera para a coordenada do mundo (tem uma pequena diferença acho que por
 	# arredondamento)
 	local_position_player = tilemap.map_to_world(posicao_atual_player)
 	var player_global_position = tilemap.to_global(local_position_player)
-	#print("posicao do player 'restaurada' = ", player_global_position)
 	# --------------------------------------------------------------------------
 	
-
-	#direction = global_position.direction_to(player_global_position)
-	#var caminho = a_estrela(posicao_atual_enemy, posicao_atual_player)
 	
 	#var velocity = direction * SPEED
 	#velocity = move_and_slide(velocity)		
-	print("posicao atual do ORC no grid = ", posicao_atual_enemy)
-	print("posicao atual do PLAYER no grid = ", posicao_atual_player)
-	var caminho = a_estrela(posicao_atual_enemy, posicao_atual_player)
+	#print("posicao atual do ORC no grid = ", posicao_atual_enemy)
+	#print("posicao atual do PLAYER no grid = ", posicao_atual_player)
+	
+#	if (execute):
+	caminho = a_estrela_2(posicao_atual_enemy, posicao_atual_player)
+#		execute = false 
+#		$Timer2.start(0.5)
 	#print("caminho gerado = ", caminho)	
+	
+	for item in caminho:
+		var index = caminho.find(item)
+		var local = tilemap.map_to_world(item)
+		var global = tilemap.to_global(local)
+		caminho[index] = global
+		#print("caminho convertido = ", caminho[index])
+	#print("caminho depois de voltar p/ mundo = ", caminho)
+	
+	var erro_x = global_position.x - caminho[0].x
+	var erro_y = global_position.y - caminho[0].y
+
+	for item in caminho:
+		var index = caminho.find(item)
+		var x_certo = caminho[index].x + erro_x
+		var y_certo = caminho[index].y + erro_y
+		var caminho_c = Vector2(x_certo, y_certo)
+		caminho[index] = caminho_c
+		#print("caminho 'consertado' = ", caminho[index])
+	
+	
+#	direction = global_position.direction_to(player.global_position)
+	#print("direcao normal = ", direction)
+	
 	$AnimatedSprite.flip_h = direction.x < 0
+	for item in caminho:
+		if caminho.find(item) != 0:
+			#print("item de caminho = ", item)
+			direction = global_position.direction_to(item)
+			#print("direcao para o item = ", direction)
+			var velocity = direction * SPEED
+			velocity = move_and_slide(velocity)
 	
 	var collision = detect_collision()
 	if(collision == "Player"):
@@ -160,40 +195,11 @@ func _ready():
 # funções do a*
 # heuristica com base na distancia de manhattan
 func heuristic(pos, target):
-	var heuristic = abs(target.x - pos.x) + abs(target.y - pos.y)
+	var heuristic = pos.distance_to(target)
 	#print("heuristica com distancia de manhattan = ", heuristic)
 	return heuristic
 
-# gera os vizinhos de acordo com o tilemap Obstacles que apenas possui tiles que representam obstáculos
-# essa função funciona 
-func gerar_vizinhos(x, y):
-	var neighbors = []
-	
-	var tilemap = Globals.obstacles
-	var posicao = Vector2(x, y)
-	var local_position = tilemap.to_local(posicao)
-	var posicao_atual = tilemap.world_to_map(local_position)
-	#print("tile_position = ", posicao_atual)
-	#print("posicao_atual.x = ", posicao_atual.x)
-	#print("posicao_atual.y = ", posicao_atual.y)
-	#var tile_id = tilemap.get_cellv(tile_position)
-	
-	for x in range(-1, 2):
-		for y in range(-1, 2):
-			
-			# ignora a própria posição (0, 0)
-			if(x == 0 and y == 0):
-				continue
-							
-			var possivel_vizinho = Vector2(posicao_atual.x + x, posicao_atual.y + y)
-			
-			# se a célula tiver valor != -1 quer dizer que está preenchida com um obstáculo
-			if(tilemap.get_cell(possivel_vizinho.x, possivel_vizinho.y) == -1):
-				# adiciona à lista de vizinhos
-				neighbors.append(possivel_vizinho)
-			
-	return neighbors
-	
+
 # nova função de gerar vizinhos para a estrutura criada
 # debuguei e parece estar funcionando normalmente assim como a outra
 # o atributo .state do node_a_star precisa ser passado já como coordenadas do grid
@@ -209,7 +215,7 @@ func gerar_vizinhos2(node_a_star):
 	for x in range(-1, 2):
 		for y in range(-1, 2):
 			# ignora a própria posição (0, 0)
-			if(x == 0 and y == 0):
+			if((x == 0 and y == 0)):
 				continue
 			
 			var possivel_vizinho = Vector2(node_a_star.state.x + x, node_a_star.state.y + y)
@@ -220,7 +226,9 @@ func gerar_vizinhos2(node_a_star):
 				p_vizinho.state = Vector2(possivel_vizinho.x, possivel_vizinho.y)
 				p_vizinho.parent = node_a_star
 				p_vizinho.action = Vector2(x, y)
-				p_vizinho.path_cost = node_a_star.path_cost + 1
+				p_vizinho.g = node_a_star.g + 1
+				p_vizinho.h = 0
+				p_vizinho.f = 0
 				# adiciona à lista de vizinhos
 				neighbors.append(p_vizinho)
 			
@@ -233,7 +241,7 @@ func gerar_vizinhos2(node_a_star):
 #	var path_cost : int
 
 func a_estrela_2(inicio, objetivo): 
-	print("entrou no a_estrela_2")
+	#print("entrou no a_estrela_2")
 	# parâmetros inicio e objetivo são dois Vector2
 	# com valores equivalentes às coordenadas do grid do tilemap obstacles (16, 16)
 	
@@ -254,152 +262,67 @@ func a_estrela_2(inicio, objetivo):
 	inicio_node.parent = null
 	inicio_node.action = Vector2.ZERO
 	# o nó inicial possui como custo apenas o valor da heuristica
-	inicio_node.path_cost = heuristic(inicio, objetivo) 
+	inicio_node.g = 0
+	inicio_node.h = heuristic(inicio_node.state, objetivo) 
 	
 	open.append(inicio_node)
+	#print("tamanho da lista open = ", open.size())
+	
+	#open.erase(inicio_node)
 	
 	# executar enquanto ainda houverem nós não explorados, ou seja
-	# até que a lsita open não esteja vazia
+	# até que a lista open não esteja vazia
 	while (not(open.empty())):
-		print("lista OPEN = ", open)
+		#print("lista OPEN = ", open)
 		
 		# obter o nó com menos custo de caminho na lista open
 		#var no_atual = Node_A_Star.new()
 #		no_atual.path_cost = 0
 		
-		var no_atual = open[0]
-		var no_atual_index = 0
+		var no_atual = Node_A_Star.new()
+		no_atual.f = 1000
+		var index
 		
 		for i in open:
-			if i.path_cost < no_atual.path_cost:
-				no_atual.state = i.state
-				no_atual.parent = i.parent
-				no_atual.action = i.action
-				no_atual.path_cost = i.path_cost
-				no_atual_index = open.find(i)
+			if i.f < no_atual.f:
+				no_atual = i
+				index = open.find(i)
 		
 		# remove o nó da lista OPEN e passa pra CLOSED
-		open.remove(no_atual_index)
 		closed.append(no_atual)
-		
-		#---------------------------------------
-#		for i in open:
-#			if i.path_cost < no_atual.path_cost:
-#				no_atual.state = i.state
-#				no_atual.parent = i.parent
-#				no_atual.action = i.action
-#				no_atual.path_cost = i.path_cost
-		#---------------------------------------
-		
+		open.remove(index)		
 		
 		# se o no_atual é = objetivo, retorna os passos necessários para alcança-lo
 		if no_atual.state == objetivo:
+			#print("encontrou objetivo")
 			var current = no_atual
 			while current != null:
 				caminho.append(current.state)
 				current = current.parent
 			# reverte a lista para obter o caminho certo
-			return caminho.invert() 
+			#print("caminho dentro do a_estrela = ", caminho)
+			caminho.invert()
+			return caminho
 		
 		# senão, gera os possíveis vizinhos
 		vizinhos = gerar_vizinhos2(no_atual)
 		for vizinho in vizinhos:
+			#print("gerou vizinhos")
 			if closed.has(vizinho):
 				continue
 			
-			vizinho.path_cost = no_atual.path_cost + heuristic(vizinho.state, objetivo) + 1
+			vizinho.h = heuristic(vizinho.state, objetivo)
+			vizinho.f = vizinho.g + vizinho.h
 			
 			for open_node in open:
-				if vizinho.state == open_node.state and vizinho.path_cost > open_node.path_cost:
+				if vizinho.state == open_node.state and vizinho.g > open_node.g:
 					continue
 			
 			open.append(vizinho)
+#			for item in open:
+#				print("lista OPEN = ", item.state)
+			
 
-# função que realiza o algoritmo a*
-func a_estrela(inicio, objetivo):
-	print("iniciou o a_estrela")
-	
-	# vetores para a implementação do a*
-	var path = []
-	var open_list = []
-	var closed_list = []
-	var vizinhos = []
-	var temp_heuristica
-	var minimo
-	var posicao_inicial = Node_A_Star.new()
-	
-	posicao_inicial.state = inicio
-	posicao_inicial.parent = null
-	posicao_inicial.action = Vector2.ZERO
-	posicao_inicial.path_cost = heuristic(inicio, objetivo)
-	print("heuristica inicial = ", posicao_inicial.path_cost)
-	
-	open_list.append(posicao_inicial)
-	open_list.erase(posicao_inicial)
-	
-	while not(open_list.empty()):
-		minimo = Node_A_Star.new()
-		minimo.path_cost = 0
-		
-		# procura o item com menor custo de caminho
-		for i in open_list:
-			if i.path_cost < minimo.path_cost:
-				minimo = i
-		
-		# retira o menor da lista OPEN
-		open_list.erase(minimo)
-		
-		# se for o objetivo, termina
-		if(minimo.state == objetivo):
-			var current_node = minimo
-			while(current_node != null):
-				path.append(current_node.state)
-				current_node = current_node.parent
-			return path
-		
-		# senão, gera os nós filhos desse
-		vizinhos = gerar_vizinhos2(minimo)
-		
-		# percorre os nós filhos/vizinhos
-		for vizinho in vizinhos:
-			# como os vizinhos percorrem apenas uma posição no grid,
-			# definimos que o custo será o custo do pai + 1
-			var successor_current_cost = minimo.path_cost + 1
-			
-			# se o vizinho está na lista OPEN
-			if open_list.has(vizinho):
-				# e o seu custo de caminho é menor do que o custo calculado anteriormente
-				if vizinho.path_cost <= successor_current_cost:
-					# -------------- nao sei se tá certo assim
-					#path.append(vizinho.state)
-					break
-					# ----------------------------------------
-					# precisa ir pro final do for mas como aaaa
-			
-			# se estiver na lsta CLOSED		
-			elif closed_list.has(vizinho):
-				if vizinho.path_cost <= successor_current_cost:
-					# -------------- nao sei se tá certo assim
-					#path.append(vizinho.state)
-					break
-					# ----------------------------------------
-					# pula pro final do for
-				
-				# senão... sai de closed e vai pra open
-				closed_list.erase(vizinho)
-				open_list.append(vizinho)
-				
-			# se não estiver nem na OPEN e nem na CLOSED
-			else:
-				open_list.append(vizinho)
-				temp_heuristica = heuristic(vizinho.state, objetivo)
-				
-			vizinho.path_cost = minimo.path_cost + temp_heuristica
-			vizinho.parent = minimo
-			
-		closed_list.append(minimo)
-	
-	# lista OPEN está vazia e o objetivo não foi atingido	
-	if(minimo.state != objetivo.position):
-		print("erro: lista OPEN está vazia.")
-		return -1
+
+func _on_Timer2_timeout():
+	execute = true
